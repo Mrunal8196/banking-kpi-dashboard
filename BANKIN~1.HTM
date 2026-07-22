@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Banking KPI Dashboard | Mrunal — Data & BI Portfolio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#171e2e; --panel-2:#1e2740; --line:#28324a;
+    --txt:#e8edf7; --muted:#95a2bd; --accent:#f2c811; --accent-2:#118dff;
+    --green:#2ecc71; --red:#ff5964; --purple:#8b5cf6; --teal:#22d3ee;
+    --shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--txt);}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;background:linear-gradient(90deg,#141b2b,#1b2440);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#f7982a);display:flex;align-items:center;justify-content:center;font-weight:800;color:#101426;font-size:18px}
+  .brand h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand span{display:block;font-size:11.5px;color:var(--muted);font-weight:500}
+  .topbar .meta{font-size:11.5px;color:var(--muted);text-align:right}
+  .layout{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 67px)}
+  .side{background:var(--panel);border-right:1px solid var(--line);padding:18px 16px}
+  .side h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:20px 0 8px}
+  .side h3:first-child{margin-top:0}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:12px;padding:6px 10px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);color:var(--muted);cursor:pointer;user-select:none;transition:.15s}
+  .chip:hover{border-color:var(--accent-2)}
+  .chip.active{background:var(--accent-2);border-color:var(--accent-2);color:#fff;font-weight:600}
+  select{width:100%;padding:8px 10px;background:var(--panel-2);color:var(--txt);border:1px solid var(--line);border-radius:7px;font-size:13px}
+  .reset{margin-top:22px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:12.5px}
+  .reset:hover{color:var(--txt);border-color:var(--accent)}
+  .main{padding:20px 24px 40px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent)}
+  .kpi.b:before{background:var(--accent-2)} .kpi.g:before{background:var(--green)}
+  .kpi.p:before{background:var(--purple)} .kpi.t:before{background:var(--teal)}
+  .kpi.r:before{background:var(--red)} .kpi.y:before{background:var(--accent)}
+  .kpi .label{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .kpi .val{font-size:25px;font-weight:750;margin:6px 0 2px;line-height:1}
+  .kpi .sub{font-size:12px;color:var(--muted)}
+  .up{color:var(--green)} .down{color:var(--red)}
+  .row{display:grid;gap:14px;margin-top:16px}
+  .row.r2{grid-template-columns:1.55fr 1fr}
+  .row.r3{grid-template-columns:1fr 1fr 1fr}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .card h4{margin:0 0 4px;font-size:14px}
+  .card .csub{font-size:11.5px;color:var(--muted);margin-bottom:12px}
+  .chart-wrap{position:relative;height:250px}
+  .chart-wrap.sm{height:210px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none}
+  th:hover{color:var(--txt)}
+  tbody tr:hover{background:var(--panel-2)}
+  .bar-cell{display:inline-block;height:7px;border-radius:4px;background:var(--accent-2);vertical-align:middle;margin-left:8px}
+  .pill{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+  .pill.ok{background:rgba(46,204,113,.15);color:var(--green)}
+  .pill.warn{background:rgba(242,200,17,.15);color:var(--accent)}
+  .pill.bad{background:rgba(255,89,100,.15);color:var(--red)}
+  .foot{margin-top:22px;font-size:11.5px;color:var(--muted);text-align:center;line-height:1.6}
+  @media(max-width:1050px){.layout{grid-template-columns:1fr}.side{border-right:none;border-bottom:1px solid var(--line)}.kpi-grid{grid-template-columns:repeat(2,1fr)}.row.r2,.row.r3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">B</div>
+      <div><h1>Banking Performance KPI Dashboard</h1><span>Retail &amp; Commercial Banking · Portfolio demo by Mrunal</span></div>
+    </div>
+    <div class="meta">Data: Jan 2024 – Jun 2026 (synthetic)<br/>Currency: EUR · Model: star schema</div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h3>Region</h3>
+      <div class="chip-row" id="regionChips"></div>
+      <h3>Product Line</h3>
+      <select id="productSel"><option value="ALL">All products</option></select>
+      <h3>Time Window</h3>
+      <select id="timeSel">
+        <option value="30">Full period (30 mo)</option>
+        <option value="12">Last 12 months</option>
+        <option value="6">Last 6 months</option>
+        <option value="3">Last quarter</option>
+      </select>
+      <button class="reset" id="resetBtn">↺ Reset all filters</button>
+      <h3>About</h3>
+      <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Interactive demo replicating a Power BI executive report — KPI cards, trend analysis, region &amp; product drill-through, and branch-level detail. Fully client-side.</div>
+    </aside>
+
+    <main class="main">
+      <div class="kpi-grid" id="kpis"></div>
+
+      <div class="row r2">
+        <div class="card">
+          <h4>Revenue vs. Operating Cost</h4>
+          <div class="csub">Monthly trend (EUR thousands)</div>
+          <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h4>Revenue by Product</h4>
+          <div class="csub">Share of total income</div>
+          <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="row r3">
+        <div class="card">
+          <h4>Deposits vs. Loans</h4>
+          <div class="csub">Book value trend (EUR millions)</div>
+          <div class="chart-wrap sm"><canvas id="dlChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h4>Revenue by Region</h4>
+          <div class="csub">Period total (EUR thousands)</div>
+          <div class="chart-wrap sm"><canvas id="regionChart"></canvas></div>
+        </div>
+        <div class="card">
+          <h4>Asset Quality — NPA %</h4>
+          <div class="csub">Non-performing assets by region</div>
+          <div class="chart-wrap sm"><canvas id="npaChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="card">
+          <h4>Branch Performance</h4>
+          <div class="csub">Click a column header to sort · top 12 by selected metric</div>
+          <table id="branchTable">
+            <thead><tr>
+              <th data-k="BranchName">Branch</th>
+              <th data-k="Region">Region</th>
+              <th data-k="Revenue">Revenue €k</th>
+              <th data-k="Deposits">Deposits €m</th>
+              <th data-k="Loans">Loans €m</th>
+              <th data-k="CIR">Cost/Income</th>
+              <th data-k="NPA">NPA %</th>
+              <th data-k="CSAT">CSAT</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="foot">
+        Synthetic dataset generated deterministically — no real customer data. Built to demonstrate KPI definition, data modeling, and BI storytelling.<br/>
+        © 2026 Mrunal · Data &amp; Business Intelligence Portfolio
+      </div>
+    </main>
+  </div>
+
+<script>
+/* ---------- deterministic RNG (mulberry32) ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+let rng=mulberry32(42);
+function rnd(min,max){return min+(max-min)*rng();}
+function gauss(m,s){let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+
+/* ---------- generate model (mirrors repo data-generator.py) ---------- */
+const REGIONS={North:["Berlin","Hamburg","Hannover"],South:["Munich","Stuttgart","Nuremberg"],West:["Cologne","Frankfurt","Dusseldorf"],East:["Leipzig","Dresden","Erfurt"]};
+const PRODUCTS=["Retail Banking","Corporate Banking","Wealth Management","SME Lending","Cards & Payments"];
+const PMIX={"Retail Banking":1.0,"Corporate Banking":1.8,"Wealth Management":1.3,"SME Lending":0.9,"Cards & Payments":0.5};
+const GROWTH={North:1.010,South:1.014,West:1.008,East:1.006};
+const SUFFIX=["Central","Nord","Sud","West","Ost"];
+
+const months=[];{let d=new Date(2024,0,1);for(let i=0;i<30;i++){months.push(new Date(d));d.setMonth(d.getMonth()+1);}}
+const mLabels=months.map(m=>m.toLocaleString('en',{month:'short',year:'2-digit'}));
+
+const branches=[];let bid=1000;
+for(const [region,cities] of Object.entries(REGIONS)){for(const city of cities){const n=Math.floor(rnd(2,3.99));for(let k=0;k<n;k++){bid++;branches.push({BranchID:bid,BranchName:`${city} ${SUFFIX[k]||k}`,City:city,Region:region,scale:rnd(0.6,1.6)});}}}
+
+const facts=[];
+for(const b of branches){
+  for(const p of PRODUCTS){
+    const seedDep=rnd(20,60)*b.scale*PMIX[p];
+    const seedLoan=rnd(15,50)*b.scale*PMIX[p];
+    months.forEach((mo,idx)=>{
+      const g=Math.pow(GROWTH[b.Region],idx);
+      const season=1+0.05*Math.sin((mo.getMonth()/12)*2*Math.PI);
+      const deposits=seedDep*g*season*rnd(0.97,1.03);
+      const loans=seedLoan*g*season*rnd(0.96,1.04);
+      const nim=rnd(2.4,3.6);
+      const interest=loans*(nim/100)/12*1000;
+      const fee=deposits*rnd(0.001,0.004)*1000;
+      const revenue=interest+fee;
+      const opex=revenue*rnd(0.45,0.62);
+      const npa=Math.max(0.4,gauss(2.1,0.6));
+      const active=Math.round(seedDep*g*180*PMIX[p]);
+      const csat=Math.min(5,Math.max(3.2,gauss(4.2,0.3)));
+      facts.push({mi:idx,BranchID:b.BranchID,Region:b.Region,Product:p,deposits,loans,nim,revenue,opex,npa,active,csat});
+    });
+  }
+}
+const branchById=Object.fromEntries(branches.map(b=>[b.BranchID,b]));
+
+/* ---------- filter state ---------- */
+let state={regions:new Set(),product:"ALL",time:30};
+
+/* ---------- UI build ---------- */
+const regionChips=document.getElementById('regionChips');
+Object.keys(REGIONS).forEach(r=>{const c=document.createElement('div');c.className='chip';c.textContent=r;c.onclick=()=>{state.regions.has(r)?state.regions.delete(r):state.regions.add(r);c.classList.toggle('active');render();};regionChips.appendChild(c);});
+const productSel=document.getElementById('productSel');
+PRODUCTS.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;productSel.appendChild(o);});
+productSel.onchange=e=>{state.product=e.target.value;render();};
+document.getElementById('timeSel').onchange=e=>{state.time=+e.target.value;render();};
+document.getElementById('resetBtn').onclick=()=>{state={regions:new Set(),product:"ALL",time:30};productSel.value="ALL";document.getElementById('timeSel').value="30";[...regionChips.children].forEach(c=>c.classList.remove('active'));render();};
+
+function filtered(){const minMi=30-state.time;return facts.filter(f=>f.mi>=minMi&&(state.regions.size===0||state.regions.has(f.Region))&&(state.product==="ALL"||f.Product===state.product));}
+const eur=n=>n>=1000?(n/1000).toFixed(1)+'k':n.toFixed(0);
+const fmt=n=>Math.round(n).toLocaleString('en');
+
+/* ---------- charts ---------- */
+Chart.defaults.color='#95a2bd';Chart.defaults.borderColor='#28324a';Chart.defaults.font.family='Segoe UI';
+let charts={};
+function mk(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id),cfg);}
+
+function render(){
+  const d=filtered();const minMi=30-state.time;const active=mLabels.slice(minMi);
+  const sum=(k)=>d.reduce((a,f)=>a+f[k],0);
+  const revenue=sum('revenue'),opex=sum('opex'),dep=sum('deposits'),loan=sum('loans');
+  const nim=d.reduce((a,f)=>a+f.nim,0)/d.length;
+  const npa=d.reduce((a,f)=>a+f.npa,0)/d.length;
+  const cir=opex/revenue*100;
+  const cust=sum('active');
+  const csat=d.reduce((a,f)=>a+f.csat,0)/d.length;
+  const mid=minMi+Math.floor(state.time/2);
+  const rNew=d.filter(f=>f.mi>=mid).reduce((a,f)=>a+f.revenue,0);
+  const rOld=d.filter(f=>f.mi<mid).reduce((a,f)=>a+f.revenue,0);
+  const rDelta=rOld?((rNew-rOld)/rOld*100):0;
+  const brCount=branches.filter(b=>state.regions.size===0||state.regions.has(b.Region)).length;
+  const kdef=[
+    {c:'y',l:'Total Revenue',v:'€'+eur(revenue),s:(rDelta>=0?'▲ ':'▼ ')+Math.abs(rDelta).toFixed(1)+'% vs prior',cls:rDelta>=0?'up':'down'},
+    {c:'b',l:'Deposits (book)',v:'€'+fmt(dep)+'m',s:'across '+brCount+' branches'},
+    {c:'g',l:'Loans (book)',v:'€'+fmt(loan)+'m',s:'LTD ratio '+(loan/dep*100).toFixed(0)+'%'},
+    {c:'t',l:'Net Interest Margin',v:nim.toFixed(2)+'%',s:'blended average'},
+    {c:'p',l:'Cost-to-Income',v:cir.toFixed(1)+'%',s:cir<55?'efficient':'watch'},
+    {c:(npa<2.5?'g':'r'),l:'NPA Ratio',v:npa.toFixed(2)+'%',s:npa<2.5?'healthy book':'elevated risk'},
+    {c:'b',l:'Active Customers',v:fmt(cust),s:'period active'},
+    {c:'y',l:'Avg CSAT',v:csat.toFixed(2)+' / 5',s:'satisfaction'},
+  ];
+  document.getElementById('kpis').innerHTML=kdef.map(k=>`<div class="kpi ${k.c}"><div class="label">${k.l}</div><div class="val">${k.v}</div><div class="sub ${k.cls||''}">${k.s}</div></div>`).join('');
+
+  const byMonthRev=active.map((_,i)=>d.filter(f=>f.mi===minMi+i).reduce((a,f)=>a+f.revenue,0));
+  const byMonthOpex=active.map((_,i)=>d.filter(f=>f.mi===minMi+i).reduce((a,f)=>a+f.opex,0));
+  mk('trendChart',{type:'line',data:{labels:active,datasets:[
+    {label:'Revenue',data:byMonthRev,borderColor:'#f2c811',backgroundColor:'rgba(242,200,17,.12)',fill:true,tension:.35,borderWidth:2,pointRadius:0},
+    {label:'Operating Cost',data:byMonthOpex,borderColor:'#ff5964',backgroundColor:'transparent',tension:.35,borderWidth:2,pointRadius:0,borderDash:[5,4]}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:14}}},scales:{y:{ticks:{callback:v=>'€'+eur(v)}}}}});
+
+  const prodList=state.product==="ALL"?PRODUCTS:[state.product];
+  const prodRev=prodList.map(p=>d.filter(f=>f.Product===p).reduce((a,f)=>a+f.revenue,0));
+  mk('donutChart',{type:'doughnut',data:{labels:prodList,datasets:[{data:prodRev,backgroundColor:['#118dff','#f2c811','#8b5cf6','#22d3ee','#2ecc71'],borderColor:'#171e2e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{boxWidth:12,padding:10,font:{size:11}}}}}});
+
+  const byMonthDep=active.map((_,i)=>d.filter(f=>f.mi===minMi+i).reduce((a,f)=>a+f.deposits,0));
+  const byMonthLoan=active.map((_,i)=>d.filter(f=>f.mi===minMi+i).reduce((a,f)=>a+f.loans,0));
+  mk('dlChart',{type:'line',data:{labels:active,datasets:[
+    {label:'Deposits',data:byMonthDep,borderColor:'#118dff',backgroundColor:'rgba(17,141,255,.15)',fill:true,tension:.3,borderWidth:2,pointRadius:0},
+    {label:'Loans',data:byMonthLoan,borderColor:'#2ecc71',backgroundColor:'rgba(46,204,113,.12)',fill:true,tension:.3,borderWidth:2,pointRadius:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:10}}}}});
+
+  const regs=Object.keys(REGIONS).filter(r=>state.regions.size===0||state.regions.has(r));
+  const regRev=regs.map(r=>d.filter(f=>f.Region===r).reduce((a,f)=>a+f.revenue,0));
+  mk('regionChart',{type:'bar',data:{labels:regs,datasets:[{data:regRev,backgroundColor:'#118dff',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'€'+eur(v)}}}}});
+
+  const regNpa=regs.map(r=>{const s=d.filter(f=>f.Region===r);return s.reduce((a,f)=>a+f.npa,0)/s.length;});
+  mk('npaChart',{type:'bar',data:{labels:regs,datasets:[{data:regNpa,backgroundColor:regNpa.map(v=>v<2.5?'#2ecc71':'#ff5964'),borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>v.toFixed(1)+'%'}}}}});
+
+  renderTable(d);
+}
+
+let sortKey='Revenue',sortDir=-1;
+function renderTable(d){
+  const map={};
+  d.forEach(f=>{const b=branchById[f.BranchID];const key=f.BranchID;if(!map[key])map[key]={BranchName:b.BranchName,Region:b.Region,Revenue:0,Opex:0,Deposits:0,Loans:0,npaSum:0,csatSum:0,n:0};const m=map[key];m.Revenue+=f.revenue;m.Opex+=f.opex;m.Deposits+=f.deposits;m.Loans+=f.loans;m.npaSum+=f.npa;m.csatSum+=f.csat;m.n++;});
+  let rows=Object.values(map).map(m=>({BranchName:m.BranchName,Region:m.Region,Revenue:m.Revenue,Deposits:m.Deposits,Loans:m.Loans,CIR:m.Opex/m.Revenue*100,NPA:m.npaSum/m.n,CSAT:m.csatSum/m.n}));
+  rows.sort((a,b)=>{const av=a[sortKey],bv=b[sortKey];return(typeof av==='string'?av.localeCompare(bv):av-bv)*sortDir;});
+  rows=rows.slice(0,12);
+  const maxRev=Math.max(...rows.map(r=>r.Revenue));
+  const tb=document.querySelector('#branchTable tbody');
+  tb.innerHTML=rows.map(r=>{
+    const npaPill=r.NPA<2?'ok':r.NPA<2.8?'warn':'bad';
+    return `<tr><td>${r.BranchName}</td><td>${r.Region}</td>
+      <td>€${eur(r.Revenue)}<span class="bar-cell" style="width:${r.Revenue/maxRev*46}px"></span></td>
+      <td>€${fmt(r.Deposits)}</td><td>€${fmt(r.Loans)}</td>
+      <td>${r.CIR.toFixed(1)}%</td>
+      <td><span class="pill ${npaPill}">${r.NPA.toFixed(2)}%</span></td>
+      <td>${r.CSAT.toFixed(2)}</td></tr>`;
+  }).join('');
+}
+document.querySelectorAll('#branchTable th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=-1;}render();});
+
+render();
+</script>
+</body>
+</html>
