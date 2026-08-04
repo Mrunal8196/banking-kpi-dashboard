@@ -44,21 +44,11 @@ The report answers the questions a Head of Retail Banking or CFO asks every mont
 ```
 banking-kpi-dashboard/
 ├── README.md                     ← this file
-├── banking-kpi-dashboard.html    ← live browser demo of the report
-├── data/
-│   ├── branches.csv              ← dimension: branch master
-│   └── fact_kpi_monthly_sample.csv ← fact: monthly KPIs (sample)
-├── dax/
-│   └── dax-measures.md           ← all DAX measures, documented
-├── docs/
-│   └── data-model.md             ← star schema + data dictionary
-└── scripts/
-    └── data-generator.py         ← reproducible synthetic-data pipeline
-```
-
-> All files ship flat in this delivery — move them into the folders above when you push to GitHub.
-
----
+├── banking-kpi-dashboard.html    ← live browser demo of the report            
+├── fact_kpi_monthly.csv          ← fact: monthly KPIs 
+├── data-model.md                 ← star schema + data dictionary
+├── dax-measures.md               ← all DAX measures, documented
+├── data-generator.py             ← reproducible synthetic-data pipeline
 
 ## 🧱 Data model (star schema)
 
