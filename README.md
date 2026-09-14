@@ -11,7 +11,7 @@ star-schema data modeling, DAX measure authoring, and dashboard storytelling.
 > (a client-side replica of the Power BI report — no install needed). Host it free on GitHub Pages to get a
 > shareable link for your resume.
 
----
+--
 
 ## 📊 What it shows
 
