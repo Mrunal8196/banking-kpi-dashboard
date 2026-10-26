@@ -8,7 +8,7 @@ star-schema data modeling, DAX measure authoring, and dashboard storytelling.
 **Stack:** Power BI Desktop · DAX · Star Schema · Python (data generation)
 
 > 🔗 **Live interactive demo:** open [`banking-kpi-dashboard.html`](./banking-kpi-dashboard.html) in a browser
-> (a client-side replica of the Power BI report — no install needed). Host it free on GitHub Pages to get a
+> (a client-side replica of the Power BI report — no install needed). Host it for free on GitHub Pages to get a
 > shareable link for your resume.
 
 
