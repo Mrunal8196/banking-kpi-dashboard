@@ -12,7 +12,7 @@ star-schema data modeling, DAX measure authoring, and dashboard storytelling.
 > shareable link for your resume.
 
 
-## 📊 What it shows
+## 📊 What it shows:
 
 The report answers the questions a Head of Retail Banking or CFO asks every month:
 
